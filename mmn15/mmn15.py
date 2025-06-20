@@ -25,6 +25,12 @@ def average_price(apts):
 
 
 def how_many_rooftop(apts):
+    """
+    Count the number of rooftop apartments that has pool in a list of apartments
+
+    :param apts: List of apartment objects
+    :return: Number of rooftop apartments with pool
+    """
     count = 0
     for apt in apts:
         if isinstance(apt, RoofApt):
@@ -38,7 +44,7 @@ def how_many_apt_type(apts):
     Count the number of apartments of each type in the list.
 
     :param apts: List of apartment objects.
-    :return: Dictionary with keys 'Apt', 'SpecialApt', 'RoofApt', 'GardenApt' and their counts as values.
+    :return: Dictionary with keys 'Apt', 'SpecialApt', 'GardenApt', 'RoofApt' and their counts as values.
     """
     counts = {
         'Apt': 0,
@@ -61,6 +67,12 @@ def how_many_apt_type(apts):
 
 
 def top_price(apts):
+    """
+    Find and return the first instance of apartment with the highest price in a list of apartments
+
+    :param apts: List of apartment objects
+    :return: 'None' if the list is empty else 'apt' object with the higest price
+    """
     top = 0
     res = None
     for apt in apts:
@@ -72,8 +84,15 @@ def top_price(apts):
 
 
 def only_valid_apts(apts):
+    """
+    Iterating through list of apartments and returning a list with qualifying apartments
+    Qualifications: Apartment has view or pool, and it's priced over one million shekels
+    :param apts:
+    :return:
+    """
     res = []
     for apt in apts:
+        # since any apartment that has pool, already has view, check if SpecialApt, and check if it has view.
         if isinstance(apt, SpecialApt):
             if apt.get_has_view() and apt.get_price() > TRESHOLD_PRICE:
                 res.append(apt)
