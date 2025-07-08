@@ -9,6 +9,8 @@
 """
 
 import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import stats
 
 
 def validate_df(df, required_columns=None):
@@ -179,15 +181,135 @@ def common_orbit(df):
 
 def min_max_diameter(df):
     """
-    Count how many astroids have a max diameter greater than the average max diameter in the df
-    :param: (pd.DataFrame): The input DataFrame
+    Count how many astroids have a max diameter greater than the average max diameter in the df.
+    :param: df (pd.DataFrame): The input DataFrame
     :return: int count of how many astroids have a max diameter greater than the average max diameter in the df
     """
-    requiered_columns = ['Est Dia in KM(max)']
+    column = 'Est Dia in KM(max)'
     # Validate df is DataFrame and is not empty and needed columns exist
-    if not validate_df(df, requiered_columns):
+    if not validate_df(df, [column]):
         return None
-    mean_max_diameter = df['Est Dia in KM(max)'].mean()
-    mask = df['Est Dia in KM(max)'] > mean_max_diameter
-    greater_than_mean_count = mask.sum()
-    return int(greater_than_mean_count)
+    # Calculate the mean of max diameter in the data frame
+    mean_max_diameter = df[column].mean()
+    # The bool expression will return 1 for each time it is greater than the mean
+    count = (df['Est Dia in KM(max)'] > mean_max_diameter).sum()
+    return int(count)
+
+
+def plt_hist_diameter(df):
+    """
+    Plot a histogram of the number of astroids with their mean diameter in km.
+    Mean diameter will be the average between 'Est Dia in KM(min)' and 'Est Dia in KM(max)'.
+    Histogram has 100 bins.
+    :param: df (pd.DataFrame): The input DataFrame
+    :return: None
+    """
+    requierd_column = ['Est Dia in KM(min)', 'Est Dia in KM(max)']
+    # Validate df is DataFrame and is not empty and needed columns exist
+    if not validate_df(df, requierd_column):
+        return None
+
+    # Calculate the mean diameter for each record
+    mean_diameter = (df['Est Dia in KM(min)'] + df['Est Dia in KM(max)']) / 2
+
+    # Plot histogram
+    plt.hist(mean_diameter, bins=100, color='steelblue', edgecolor='black')
+    plt.xlabel('Mean Diameter (km)')
+    plt.ylabel('Number of Astroids')
+    plt.title('Histogram of Asteroid Count by Mean Diameter (km)')
+    plt.grid(True)
+    plt.show()
+
+
+def plt_hist_common_orbit(df):
+    """
+    Plot a histogram of the number of astroid with their according orbit intersection.
+    Histogram has 10 bins.
+    :param: df (pd.DataFrame): The input DataFrame
+    :return: None
+    """
+    requierd_column = 'Minimum Orbit Intersection'
+    # Validate df is DataFrame and is not empty and needed columns exist
+    if not validate_df(df, [requierd_column]):
+        return None
+
+    # Calculate range
+    values = df[requierd_column].dropna()
+    min_val = values.min()
+    max_val = values.max()
+
+    # Plot histogram
+    plt.hist(values, bins=10, range=(min_val, max_val), color='steelblue', edgecolor='black')
+    plt.xlabel('Minimum Orbit Intersection')
+    plt.ylabel('Number of Asteroids')
+    plt.title('Histogram of Asteroids by Their Minimum Orbit Intersection')
+    plt.grid(True)
+    plt.show()
+
+
+def plt_pie_hazard(df):
+    """
+    Plot a pie chart of the percentage of astroids that are classified as hazardous and the ones that aer not.
+    :param: df (pd.DataFrame): The input DataFrame
+    :return: None
+    """
+    requierd_column = 'Hazardous'
+    # Validate df is DataFrame and is not empty and needed columns exist
+    if not validate_df(df, [requierd_column]):
+        return None
+
+    # Count the hazardous and non hazardous
+    counts = df[requierd_column].value_counts(dropna=False)
+    labels = counts.index.astype(str)
+    sizes = counts.values
+
+    # Plot pie chart
+    plt.figure(figsize=(7, 7))
+    plt.pie(sizes, labels=labels, autopct='%1.1f%%')
+    plt.title('Percentage of Hazardous and Non-Hazardous Asteroids')
+    plt.axis('equal')
+    plt.show()
+
+
+def plt_linear_motion_magnitude(df):
+    """
+    Plot a scatter plot and a simple linear regression to examine the relationship between the proximity of an asteroid
+    to earth and its movement speed.
+    Note: There is a positive linear relation between the two variables; although the scatterplot looks very dense and
+    somewhat messy, the r-value indicates a moderate linear association. Combined with a very low p-value, this means
+    the relationship is statistically significant.
+    However, the large dispersion of data points around the regression line shows that the miss distance only explains
+    a small portion of the variance in velocity. In other words, despite the statistical significance, most of the
+    variation in speed is not accounted for by miss distance alone. Therefore, while the correlation exists, it is not
+    strong enough to allow for accurate prediction or reliable explanation of asteroid velocity based solely on miss
+    distance.
+    :param: df (pd.DataFrame): The input DataFrame
+    :return: None
+    """
+    requierd_column = ['Miss Dist.(kilometers)', 'Miles per hour']
+    if not validate_df(df, requierd_column):
+        return None
+
+    # Get the actual series
+    x = df['Miss Dist.(kilometers)']
+    y = df['Miles per hour']
+
+    # Remove NaN
+    mask = x.notna() & y.notna()
+    x = x[mask]
+    y = y[mask]
+
+    # Linear regression
+    a, b, r_value, p_value, std_err = stats.linregress(x, y)
+
+    # Plot
+    plt.figure(figsize=(10, 6))
+    plt.scatter(x, y, alpha=0.6, label='Data points')
+    plt.plot(x, a * x + b, color='red', label=f'Linear Regression (r={r_value:.2f}, r^2={r_value*r_value:.2f})'
+                                              f'\np < 0.05: {0.05>p_value}')
+    plt.xlabel('Miss Distance (kilometers)')
+    plt.ylabel('Velocity (Miles per hour)')
+    plt.title('Linear Regression: Miss Distance vs. Velocity')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
